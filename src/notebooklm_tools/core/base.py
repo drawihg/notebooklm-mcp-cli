@@ -223,18 +223,19 @@ class BaseClient:
     # Query endpoint (different from batchexecute - streaming gRPC-style)
     QUERY_ENDPOINT = "/_/LabsTailwindUi/data/google.internal.labs.tailwind.orchestration.v1.LabsTailwindOrchestrationService/GenerateFreeFormStreamed"
 
-    # Headers required for page fetch (must look like a browser navigation)
+    # Headers required for page fetch (must look like a browser navigation).
+    # We use a generic Linux Chrome UA and omit sec-ch-ua* Client Hints intentionally:
+    # those headers embed OS/platform fingerprints (e.g. "macOS") that can cause Google
+    # to reject requests when the session cookies were captured on a different OS (e.g.
+    # Windows). Client Hints are optional — omitting them is safe and platform-neutral.
     _PAGE_FETCH_HEADERS = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9",
         "Sec-Fetch-Dest": "document",
         "Sec-Fetch-Mode": "navigate",
         "Sec-Fetch-Site": "none",
         "Sec-Fetch-User": "?1",
-        "sec-ch-ua": '"Google Chrome";v="143", "Chromium";v="143", "Not A(Brand";v="24"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"macOS"',
     }
 
     # =========================================================================
@@ -669,9 +670,11 @@ class BaseClient:
 
             html = response.text
 
-            # Extract CSRF token (SNlM0e)
-            csrf_match = re.search(r'"SNlM0e":"([^"]+)"', html)
-            if not csrf_match:
+            # Extract CSRF token — try multiple known key names in case Google changes
+            # the primary key (SNlM0e). Falls back to 'at=' and 'FdrFJe' patterns.
+            from .auth import extract_csrf_from_page_source
+            csrf_token = extract_csrf_from_page_source(html)
+            if not csrf_token:
                 # Save HTML for debugging
                 from notebooklm_tools.utils.config import get_storage_dir
                 debug_dir = get_storage_dir()
@@ -684,7 +687,7 @@ class BaseClient:
                     f"The page structure may have changed."
                 )
 
-            self.csrf_token = csrf_match.group(1)
+            self.csrf_token = csrf_token
 
             # Extract session ID (FdrFJe) - optional but helps
             sid_match = re.search(r'"FdrFJe":"([^"]+)"', html)

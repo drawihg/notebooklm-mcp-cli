@@ -13,7 +13,24 @@ from notebooklm_tools.core.auth import load_cached_tokens, AuthManager
 from notebooklm_tools.core.client import NotebookLMClient
 from notebooklm_tools.utils.config import get_config, get_storage_dir
 
-console = Console()
+
+def make_console(**kwargs) -> "Console":
+    """Create a Rich Console that is safe on Windows legacy codepage terminals.
+
+    Windows consoles using cp1251/cp1252 etc. cannot encode certain Unicode
+    characters that Rich uses by default (e.g. checkmark ✓ U+2713). Setting
+    ``safe_box=True`` replaces box-drawing chars with ASCII fallbacks.
+    Rich also auto-detects the terminal encoding on Windows via ``PYTHONIOENCODING``
+    or the system locale — but this ensures we never crash even without that override.
+
+    See: https://github.com/jacob-bd/notebooklm-mcp-cli/issues/105
+    """
+    kwargs.setdefault("safe_box", True)
+    return Console(**kwargs)
+
+
+console = make_console()
+
 
 def get_client(profile: str | None = None) -> NotebookLMClient:
     """Get an authenticated NotebookLM client.
