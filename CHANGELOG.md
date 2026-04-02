@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.15] - 2026-04-02
+
+### Added
+- **Async Query Polling (Issue #125)** — New `notebook_query_start` and `notebook_query_status` MCP tools for querying large notebooks (50+ sources) without hitting MCP client timeouts. `notebook_query_start` fires the query in a background thread and returns immediately with a `query_id`. Poll `notebook_query_status` with the `query_id` to get the result when ready. Includes automatic TTL cleanup (10 min) for stale entries. The existing `notebook_query` tool remains unchanged for backward compatibility.
+- **10 new unit tests** for async query lifecycle (total: 685 tests)
+
 ## [0.5.14] - 2026-04-01
 
 ### Fixed
