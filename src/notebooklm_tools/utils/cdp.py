@@ -660,11 +660,11 @@ def execute_cdp_command(
             response = json.loads(ws.recv())
             if response.get("id") == 1:
                 return response.get("result", {})
-    except websocket.WebSocketTimeoutException:
+    except websocket.WebSocketTimeoutException as err:
         _cached_ws = _cached_ws_url = None
         raise TimeoutError(
             f"CDP command '{method}' timed out after 30s waiting for response"
-        )
+        ) from err
 
 
 def get_page_cookies(ws_url: str) -> list[dict]:
