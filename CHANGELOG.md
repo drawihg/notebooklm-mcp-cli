@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.18] - 2026-04-09
+
+### Added
+- **WSL2 Authentication Support (PR #138)** — New `nlm login --wsl` flag launches Windows Chrome from WSL2 for seamless authentication. Includes automatic firewall rule management, cross-boundary CDP communication, and a cleanup mechanism for temporary Chrome profiles. Full setup guide at `docs/WSL_SETUP.md`. Thanks to **@kylebrodeur** for the comprehensive implementation!
+- **WSL2 Diagnostics** — `nlm doctor` now detects WSL2 environments and reports Chrome availability, Windows interop status, and firewall configuration.
+
+### Fixed
+- **Thread-Safety for Concurrent MCP Tool Calls (PR #135)** — Added `threading.Lock` to `BaseClient` protecting mutable state (`_reqid_counter`, `_conversation_cache`, `_source_rpc_version`) from race conditions during parallel MCP tool invocations. Uses double-checked locking for singleton client initialization. Includes 7 new concurrent access tests. Thanks to **@xiangyuwang1998** for the implementation!
+- **Restored CDP WebSocket Timeout** — Re-applied the 30-second timeout on `execute_cdp_command()` that was inadvertently removed during the WSL2 merge. Prevents infinite hangs on stale/dropped WebSocket connections.
+- **Restored Port Map File Permissions** — Re-applied `chmod 0o600` on the port map file that was inadvertently removed during the WSL2 merge. Ensures the port map is only readable by the owner.
+
 ## [0.5.17] - 2026-04-07
 
 ### Security
